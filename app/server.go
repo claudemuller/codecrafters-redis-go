@@ -25,7 +25,7 @@ func main() {
 	done := make(chan struct{})
 
 	go func(c net.Conn) {
-		resp := []byte("+OK\r\n")
+		resp := []byte("+PONG\r\n")
 
 		sent, err := c.Write(resp)
 		if err != nil {
