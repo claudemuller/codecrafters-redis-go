@@ -14,19 +14,32 @@ func main() {
 		fmt.Printf("Failed to bind to port 6379: %v\n", err)
 		os.Exit(1)
 	}
+	defer l.Close()
 
-	sock, err := l.Accept()
+	conn, err := l.Accept()
 	if err != nil {
 		fmt.Printf("Error accepting connection: %v\n", err)
 		os.Exit(1)
 	}
 
-	resp := []byte("+OK\r\n")
-	sent, err := sock.Write(resp)
-	if err != nil {
-		fmt.Printf("Error writing to socket: %v\n", err)
-	}
-	if sent <= 0 {
-		fmt.Println("Zero bytes were written")
-	}
+	done := make(chan struct{})
+
+	go func(c net.Conn) {
+		resp := []byte("+OK\r\n")
+
+		sent, err := c.Write(resp)
+		if err != nil {
+			fmt.Printf("Error writing to socket: %v\n", err)
+		}
+
+		if sent <= 0 {
+			fmt.Println("Zero bytes were written")
+		}
+
+		c.Close()
+
+		done <- struct{}{}
+	}(conn)
+
+	<-done
 }
