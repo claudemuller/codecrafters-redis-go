@@ -11,13 +11,22 @@ func main() {
 
 	l, err := net.Listen("tcp", "0.0.0.0:6379")
 	if err != nil {
-		fmt.Println("Failed to bind to port 6379")
+		fmt.Printf("Failed to bind to port 6379: %v\n", err)
 		os.Exit(1)
 	}
 
-	_, err = l.Accept()
+	sock, err := l.Accept()
 	if err != nil {
-		fmt.Println("Error accepting connection: ", err.Error())
+		fmt.Printf("Error accepting connection: %v\n", err)
 		os.Exit(1)
+	}
+
+	resp := []byte("+OK\r\n")
+	sent, err := sock.Write(resp)
+	if err != nil {
+		fmt.Printf("Error writing to socket: %v\n", err)
+	}
+	if sent <= 0 {
+		fmt.Println("Zero bytes were written")
 	}
 }
