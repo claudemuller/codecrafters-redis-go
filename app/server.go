@@ -1,45 +1,49 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"net"
 	"os"
 )
 
 func main() {
-	fmt.Println("Logs from your program will appear here!")
+	log.SetPrefix("rediz: ")
 
-	l, err := net.Listen("tcp", "0.0.0.0:6379")
+	const port = "6379"
+
+	l, err := net.Listen("tcp", "0.0.0.0:"+port)
 	if err != nil {
-		fmt.Printf("Failed to bind to port 6379: %v\n", err)
+		log.Printf("failed to bind to port 6379: %v\n", err)
 		os.Exit(1)
 	}
 	defer l.Close()
 
-	conn, err := l.Accept()
+	log.Printf("server started on port %s", port)
+
+	for {
+		conn, err := l.Accept()
+		if err != nil {
+			log.Printf("error accepting connection: %v\n", err)
+			os.Exit(1)
+		}
+
+		go handleConn(conn)
+	}
+}
+
+func handleConn(c net.Conn) {
+	log.Printf("connection from %s accepted", c.RemoteAddr())
+
+	resp := []byte("+PONG\r\n")
+
+	sent, err := c.Write(resp)
 	if err != nil {
-		fmt.Printf("Error accepting connection: %v\n", err)
-		os.Exit(1)
+		log.Printf("error writing to socket: %v\n", err)
 	}
 
-	done := make(chan struct{})
+	if sent <= 0 {
+		log.Println("zero bytes were written")
+	}
 
-	go func(c net.Conn) {
-		resp := []byte("+PONG\r\n")
-
-		sent, err := c.Write(resp)
-		if err != nil {
-			fmt.Printf("Error writing to socket: %v\n", err)
-		}
-
-		if sent <= 0 {
-			fmt.Println("Zero bytes were written")
-		}
-
-		c.Close()
-
-		done <- struct{}{}
-	}(conn)
-
-	<-done
+	c.Close()
 }
