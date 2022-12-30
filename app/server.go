@@ -41,7 +41,7 @@ func handleConn(c net.Conn) {
 
 	log.Printf("connection from %s accepted", c.RemoteAddr())
 
-	log.Println("attempting to read from connection")
+	log.Println("attempting to read from connection...")
 
 	buf := make([]byte, 1024)
 
